@@ -1,43 +1,145 @@
-#ifndef PASSENGER_H
-#define PASSENGER_H
+#include "../include/Flight.h"
+#include <stdexcept>
 
-#include <string>
-#include <iostream>
+Flight::Flight(const std::string& number,
+               const std::string& from,
+               const std::string& to,
+               const std::string& dateTime,
+               int seats)
+    : flightNumber(number),
+      origin(from),
+      destination(to),
+      departureDateTime(dateTime),
+      totalSeats(seats),
+      availableSeats(seats) {
 
-using namespace std;
+    if (seats <= 0) {
+        throw std::invalid_argument("Number of seats must be greater than zero.");
+    }
+}
 
-// Base class for all passenger types
-class Passenger {
-protected:
-    string passengerID;
-    string name;
-    string phone;
-    string email;
-    int loyaltyPoints;
+std::string Flight::getFlightNumber() const {
+    return flightNumber;
+}
 
-public:
-    Passenger(string id, string n, string ph, string em);
-    virtual ~Passenger();
+std::string Flight::getOrigin() const {
+    return origin;
+}
 
-    // Pure virtual functions - different for each passenger class
-    virtual double getBaggageAllowance() const = 0;       // in kg
-    virtual double getLoyaltyMultiplier() const = 0;       // points multiplier
-    virtual double getRefundPercentage() const = 0;        // base refund %
-    virtual string getPassengerType() const = 0;
-    virtual void displayInfo() const;
+std::string Flight::getDestination() const {
+    return destination;
+}
 
-    // Getters
-    string getPassengerID() const;
-    string getName() const;
-    string getPhone() const;
-    string getEmail() const;
-    int getLoyaltyPoints() const;
+std::string Flight::getDepartureDateTime() const {
+    return departureDateTime;
+}
 
-    // Setters
-    void addLoyaltyPoints(int points);
+int Flight::getTotalSeats() const {
+    return totalSeats;
+}
 
-    // Save to file
-    virtual string toFileString() const;
-};
+int Flight::getAvailableSeats() const {
+    return availableSeats;
+}
 
-#endif
+bool Flight::hasAvailableSeat() const {
+    return availableSeats > 0;
+}
+
+void Flight::reserveSeat() {
+    if (!hasAvailableSeat()) {
+        throw std::runtime_error("Flight is full.");
+    }
+
+    --availableSeats;
+}
+
+void Flight::releaseSeat() {
+    if (availableSeats < totalSeats) {
+        ++availableSeats;
+    }
+}
+
+std::ostream& operator<<(std::ostream& os, const Flight& flight) {
+    os << "Flight: " << flight.flightNumber
+       << " | " << flight.origin
+       << " -> " << flight.destination
+       << " | Departure: " << flight.departureDateTime
+       << " | Available Seats: " << flight.availableSeats
+       << "/" << flight.totalSeats;
+
+    return os;
+}
+
+
+DomesticFlight::DomesticFlight(
+    const std::string& number,
+    const std::string& from,
+    const std::string& to,
+    const std::string& dateTime,
+    int seats,
+    const std::string& route)
+    : Flight(number, from, to, dateTime, seats),
+      domesticRoute(route) {
+}
+
+double DomesticFlight::calculateBaseFare() const {
+    return 150.0;
+}
+
+void DomesticFlight::displayDetails() const {
+    std::cout << *this
+              << " | Type: Domestic"
+              << " | Route: " << domesticRoute
+              << " | Base Fare: $" << calculateBaseFare()
+              << '\n';
+}
+
+
+InternationalFlight::InternationalFlight(
+    const std::string& number,
+    const std::string& from,
+    const std::string& to,
+    const std::string& dateTime,
+    int seats,
+    bool visa)
+    : Flight(number, from, to, dateTime, seats),
+      visaRequired(visa) {
+}
+
+double InternationalFlight::calculateBaseFare() const {
+    return 500.0;
+}
+
+void InternationalFlight::displayDetails() const {
+    std::cout << *this
+              << " | Type: International"
+              << " | Visa Required: "
+              << (visaRequired ? "Yes" : "No")
+              << " | Base Fare: $" << calculateBaseFare()
+              << '\n';
+}
+
+
+CharterFlight::CharterFlight(
+    const std::string& number,
+    const std::string& from,
+    const std::string& to,
+    const std::string& dateTime,
+    int seats,
+    const std::string& holder)
+    : Flight(number, from, to, dateTime, seats),
+      contractHolder(holder) {
+}
+
+double CharterFlight::calculateBaseFare() const {
+    return 1000.0;
+}
+
+void CharterFlight::displayDetails() const {
+    std::cout << *this
+              << " | Type: Charter"
+              << " | Contract Holder: " << contractHolder
+              << " | Base Fare: $" << calculateBaseFare()
+              << '\n';
+}
